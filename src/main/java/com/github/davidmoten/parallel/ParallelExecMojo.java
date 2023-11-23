@@ -43,7 +43,7 @@ public final class ParallelExecMojo extends AbstractMojo {
             logs.add(new File("target" + File.separator + "command" + index + ".log"));
             executor.execute(() -> {
                 try {
-                    commands.get(index).start(getLog(), logs.get(index));
+                    commands.get(index).start(getLog(), TimeUnit.SECONDS.toMillis(timeoutSeconds), logs.get(index));
                 } catch (Throwable e) {
                     errors.add(e);
                 }
@@ -83,7 +83,7 @@ public final class ParallelExecMojo extends AbstractMojo {
         @Parameter(name = "workingDirectory")
         String workingDirectory;
 
-        void start(Log log, File output) {
+        void start(Log log, long timeoutMs, File output) {
             List<String> list = new ArrayList<>();
             list.add(executable);
             list.addAll(arguments);
@@ -92,7 +92,8 @@ public final class ParallelExecMojo extends AbstractMojo {
             }
             ProcessBuilder b = new ProcessBuilder(list).directory(new File(workingDirectory)).inheritIO();
             try {
-                b.start().waitFor();
+                Process process = b.start();
+                process.waitFor(timeoutMs, TimeUnit.MILLISECONDS);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             } catch (InterruptedException e) {
