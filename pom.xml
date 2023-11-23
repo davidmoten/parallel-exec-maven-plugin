@@ -21,7 +21,7 @@
         <maven.version>3.9.2</maven.version>
         <junit.version>4.13.2</junit.version>
         <bundle.plugin.version>5.1.9</bundle.plugin.version>
-        <scm.url>https://github.com/davidmoten/parallel-exec-maven-plugin</scm.url>
+        <scm.url>scm:git:https://github.com/davidmoten/parallel-exec-maven-plugin</scm.url>
     </properties>
    
     <licenses>
