@@ -6,6 +6,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -16,6 +17,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
 
 @Mojo(name = "exec", threadSafe = true)
 public final class ParallelExecMojo extends AbstractMojo {
@@ -32,8 +34,15 @@ public final class ParallelExecMojo extends AbstractMojo {
     @Parameter(name = "commands")
     private List<Command> commands;
 
+    @Parameter(name = "executable")
+    String executable;
+
+    @Parameter(defaultValue = "${project}", readonly = true)
+    private MavenProject project;
+
     @Override
     public void execute() throws MojoExecutionException {
+        Optional<String> defaultExecutable = Optional.ofNullable(executable);
         poolSize = poolSize == 0 ? Runtime.getRuntime().availableProcessors() : poolSize;
         ExecutorService executor = Executors.newFixedThreadPool(poolSize);
         List<Throwable> errors = new CopyOnWriteArrayList<>();
@@ -43,7 +52,9 @@ public final class ParallelExecMojo extends AbstractMojo {
             logs.add(new File("target" + File.separator + "command" + index + ".log"));
             executor.execute(() -> {
                 try {
-                    commands.get(index).start(getLog(), TimeUnit.SECONDS.toMillis(timeoutSeconds), logs.get(index));
+                    commands.get(index) //
+                            .start(getLog(), TimeUnit.SECONDS.toMillis(timeoutSeconds), defaultExecutable,
+                                    project.getBasedir(), logs.get(index));
                 } catch (Throwable e) {
                     errors.add(e);
                 }
@@ -74,6 +85,7 @@ public final class ParallelExecMojo extends AbstractMojo {
     }
 
     public static final class Command {
+        
         @Parameter(name = "executable")
         String executable;
 
@@ -83,19 +95,30 @@ public final class ParallelExecMojo extends AbstractMojo {
         @Parameter(name = "workingDirectory")
         String workingDirectory;
 
-        void start(Log log, long timeoutMs, File output) {
+        void start(Log log, long timeoutMs, Optional<String> defaultExecutable, File defaultWorkingDirectory,
+                File output) {
             List<String> list = new ArrayList<>();
-            list.add(executable);
-            list.addAll(arguments);
-            if (workingDirectory == null) {
-                workingDirectory = ".";
+            if (executable != null) {
+                list.add(executable);
+            } else {
+                list.add(defaultExecutable
+                        .orElseThrow(() -> new IllegalArgumentException("must specify `executable` parameter")));
             }
-            ProcessBuilder b = new ProcessBuilder(list).directory(new File(workingDirectory)).inheritIO();
+            list.addAll(arguments);
+            final File workingDir;
+            if (workingDirectory == null) {
+                workingDir = defaultWorkingDirectory;
+            } else {
+                workingDir = new File(workingDirectory);
+            }
+            ProcessBuilder b = new ProcessBuilder(list) //
+                    .directory(workingDir) //
+                    .inheritIO();
             try {
                 Process process = b.start();
                 process.waitFor(timeoutMs, TimeUnit.MILLISECONDS);
                 if (process.exitValue() != 0) {
-                    throw new RuntimeException("process failed with code="+ process.exitValue());
+                    throw new RuntimeException("process failed with code=" + process.exitValue());
                 }
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
