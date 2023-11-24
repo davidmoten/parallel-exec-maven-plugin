@@ -42,7 +42,6 @@ public final class ParallelExecMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
-        Optional<String> defaultExecutable = Optional.ofNullable(executable);
         poolSize = poolSize == 0 ? Runtime.getRuntime().availableProcessors() : poolSize;
         ExecutorService executor = Executors.newFixedThreadPool(poolSize);
         List<Throwable> errors = new CopyOnWriteArrayList<>();
@@ -52,9 +51,7 @@ public final class ParallelExecMojo extends AbstractMojo {
             logs.add(new File("target" + File.separator + "command" + index + ".log"));
             executor.execute(() -> {
                 try {
-                    commands.get(index) //
-                            .start(getLog(), TimeUnit.SECONDS.toMillis(timeoutSeconds), defaultExecutable,
-                                    project.getBasedir(), logs.get(index));
+                    start(commands.get(index), getLog(), logs.get(index));
                 } catch (Throwable e) {
                     errors.add(e);
                 }
@@ -84,8 +81,48 @@ public final class ParallelExecMojo extends AbstractMojo {
         }
     }
 
+    void start(Command command, Log log, File output) {
+        List<String> list = new ArrayList<>();
+        if (command.executable != null) {
+            list.add(command.executable);
+        } else {
+            list.add(Optional.ofNullable(executable)
+                    .orElseThrow(() -> new IllegalArgumentException("must specify `executable` parameter")));
+        }
+        list.addAll(command.arguments);
+        final File workingDir;
+        if (command.workingDirectory == null) {
+            workingDir = project.getBasedir();
+        } else {
+            workingDir = new File(command.workingDirectory);
+        }
+        ProcessBuilder b = new ProcessBuilder(list) //
+                .directory(workingDir);
+        if (separateLogs) {
+            b = b.redirectErrorStream(true) //
+                    .redirectOutput(output);
+        } else {
+            b = b.inheritIO();
+        }
+        try {
+            Process process = b.start();
+            if (!process.waitFor(timeoutSeconds, TimeUnit.SECONDS)) {
+                process.destroyForcibly();
+                throw new RuntimeException("process timed out, process was sent destroy, command: " + list);
+            }
+            if (process.exitValue() != 0) {
+                throw new RuntimeException("process failed with code=" + process.exitValue());
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        } catch (InterruptedException e) {
+            // ignore
+        }
+        log.info("finished command: " + list);
+    }
+
     public static final class Command {
-        
+
         @Parameter(name = "executable")
         String executable;
 
@@ -95,38 +132,6 @@ public final class ParallelExecMojo extends AbstractMojo {
         @Parameter(name = "workingDirectory")
         String workingDirectory;
 
-        void start(Log log, long timeoutMs, Optional<String> defaultExecutable, File defaultWorkingDirectory,
-                File output) {
-            List<String> list = new ArrayList<>();
-            if (executable != null) {
-                list.add(executable);
-            } else {
-                list.add(defaultExecutable
-                        .orElseThrow(() -> new IllegalArgumentException("must specify `executable` parameter")));
-            }
-            list.addAll(arguments);
-            final File workingDir;
-            if (workingDirectory == null) {
-                workingDir = defaultWorkingDirectory;
-            } else {
-                workingDir = new File(workingDirectory);
-            }
-            ProcessBuilder b = new ProcessBuilder(list) //
-                    .directory(workingDir) //
-                    .inheritIO();
-            try {
-                Process process = b.start();
-                process.waitFor(timeoutMs, TimeUnit.MILLISECONDS);
-                if (process.exitValue() != 0) {
-                    throw new RuntimeException("process failed with code=" + process.exitValue());
-                }
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            } catch (InterruptedException e) {
-                // ignore
-            }
-            log.info("finished command: " + list);
-        }
     }
 
 }
