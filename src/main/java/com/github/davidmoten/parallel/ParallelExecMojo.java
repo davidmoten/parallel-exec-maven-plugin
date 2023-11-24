@@ -94,6 +94,9 @@ public final class ParallelExecMojo extends AbstractMojo {
             try {
                 Process process = b.start();
                 process.waitFor(timeoutMs, TimeUnit.MILLISECONDS);
+                if (process.exitValue() != 0) {
+                    throw new RuntimeException("process failed with code="+ process.exitValue());
+                }
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             } catch (InterruptedException e) {
