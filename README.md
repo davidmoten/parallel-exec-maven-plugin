@@ -48,13 +48,13 @@ Here's a kitchen sink example:
                         <executable>${project.basedir}/generate.sh</executable>
                         <workingDirectory>${project.basedir}</workingDirectory>                        
                         <arguments>
-                            <argument>src/main/openapi/test_primary/openapi.yaml</argument>
+                            <argument>src/main/openapi/openapi.yaml</argument>
                             <argument>1</argument>
                         </arguments>
                     </command>
                     <command>
                         <arguments>
-                            <argument>src/main/openapi/simple/openapi.yaml</argument>
+                            <argument>src/main/openapi/openapi2.yaml</argument>
                             <argument>2</argument>
                         </arguments>
                     </command>
