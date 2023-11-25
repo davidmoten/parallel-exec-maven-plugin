@@ -110,7 +110,7 @@ public final class ParallelExecMojo extends AbstractMojo {
         }
         try {
             ProcessResult result = b.execute();
-            if (result.hasOutput()) {
+            if (separateLogs && (showOutput || result.getExitValue() != 0)) {
                 log.info("result of command: " + list + ":\n" + result.outputUTF8());
             }
             if (result.getExitValue() != 0) {
