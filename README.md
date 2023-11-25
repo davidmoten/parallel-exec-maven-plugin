@@ -58,10 +58,8 @@ Here's a kitchen sink example:
                         </arguments>
                     </command>
                     <command>
-                        <arguments>
-                            <argument>src/main/openapi/openapi2.yaml</argument>
-                            <argument>2</argument>
-                        </arguments>
+                        <!-- shorthand for arguments is comma delimited -->
+                        <arguments>src/main/openapi/openapi2.yaml,2</arguments>
                     </command>
                 </commands>
             </configuration>
