@@ -40,13 +40,18 @@ public final class ParallelExecMojo extends AbstractMojo {
     @Parameter(name = "showOutput", defaultValue = "true")
     private boolean showOutput;
 
-    // default for executable if not set in command
-    @Parameter(name = "executable")
-    String executable;
+    @Parameter(name = "failOnError", defaultValue = "true")
+    private boolean failOnError;
 
-    // default for working directory if not set in command
+    // executable if not set in command
+    // if no executable set anywhere then fails
+    @Parameter(name = "executable")
+    private String executable;
+
+    // working directory if not set in command
+    // if not set anywhere then uses ${project.basedir}
     @Parameter(name = "workingDirectory")
-    File workingDirectory;
+    private File workingDirectory;
 
     @Parameter(defaultValue = "${project}", readonly = true)
     private MavenProject project;
@@ -109,12 +114,18 @@ public final class ParallelExecMojo extends AbstractMojo {
                     .redirectError(System.err);
         }
         try {
+            getLog().info("starting command: " + list);
             ProcessResult result = b.execute();
             if (separateLogs && (showOutput || result.getExitValue() != 0)) {
                 log.info("result of command: " + list + ":\n" + result.outputUTF8());
             }
             if (result.getExitValue() != 0) {
-                throw new RuntimeException("process failed with code=" + result.getExitValue() + ", command: " + list);
+                if (failOnError) {
+                    throw new RuntimeException(
+                            "process failed with code=" + result.getExitValue() + ", command: " + list);
+                } else {
+                    log.info("process failed with code=" + result.getExitValue() + ", command: " + list);
+                }
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
