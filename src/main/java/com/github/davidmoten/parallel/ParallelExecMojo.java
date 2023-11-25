@@ -2,6 +2,7 @@ package com.github.davidmoten.parallel;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -84,6 +85,7 @@ public final class ParallelExecMojo extends AbstractMojo {
     }
 
     void start(Command command, Log log, ExecutorService executor) {
+        long t = System.currentTimeMillis();
         List<String> list = new ArrayList<>();
         if (command.executable != null) {
             list.add(command.executable);
@@ -139,8 +141,9 @@ public final class ParallelExecMojo extends AbstractMojo {
                 // stop any queued tasks and interrupt all running tasks
                 executor.shutdownNow();
             }
+            DecimalFormat df = new DecimalFormat("0.000");
+            log.info("finished command: " + list + " in " + df.format((System.currentTimeMillis() - t)/1000.0) + "s");
         }
-        log.info("finished command: " + list);
     }
 
     public static final class Command {
