@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.github.davidmoten</groupId>
@@ -19,9 +21,10 @@
         <maven.version>3.9.2</maven.version>
         <junit.version>4.13.2</junit.version>
         <bundle.plugin.version>5.1.9</bundle.plugin.version>
-        <scm.url>scm:git:https://github.com/davidmoten/parallel-exec-maven-plugin</scm.url>
+        <scm.url>
+            scm:git:https://github.com/davidmoten/parallel-exec-maven-plugin</scm.url>
     </properties>
-   
+
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
@@ -40,7 +43,7 @@
         <system>GitHub</system>
         <url>https://github.com/davidmoten/parallel-exec-maven-plugin/issues</url>
     </issueManagement>
-    
+
     <inceptionYear>2023</inceptionYear>
 
     <developers>
@@ -62,12 +65,18 @@
         <url>${scm.url}</url>
         <tag>HEAD</tag>
     </scm>
-    
+
     <dependencies>
         <dependency>
             <groupId>org.apache.maven.shared</groupId>
             <artifactId>maven-shared-utils</artifactId>
             <version>3.4.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.zeroturnaround</groupId>
+            <artifactId>zt-exec</artifactId>
+            <version>1.12</version>
         </dependency>
 
         <dependency>
@@ -109,7 +118,7 @@
                 <configuration>
                     <doclint>none</doclint>
                 </configuration>
-            </plugin>        
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>

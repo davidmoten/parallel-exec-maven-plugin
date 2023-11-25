@@ -3,7 +3,6 @@ package com.github.davidmoten.parallel;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -11,6 +10,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -18,6 +18,9 @@ import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.zeroturnaround.exec.InvalidExitValueException;
+import org.zeroturnaround.exec.ProcessExecutor;
+import org.zeroturnaround.exec.ProcessResult;
 
 @Mojo(name = "exec", threadSafe = true)
 public final class ParallelExecMojo extends AbstractMojo {
@@ -34,8 +37,16 @@ public final class ParallelExecMojo extends AbstractMojo {
     @Parameter(name = "commands")
     private List<Command> commands;
 
+    @Parameter(name = "showOutput", defaultValue = "true")
+    private boolean showOutput;
+
+    // default for executable if not set in command
     @Parameter(name = "executable")
     String executable;
+
+    // default for working directory if not set in command
+    @Parameter(name = "workingDirectory")
+    File workingDirectory;
 
     @Parameter(defaultValue = "${project}", readonly = true)
     private MavenProject project;
@@ -45,13 +56,11 @@ public final class ParallelExecMojo extends AbstractMojo {
         poolSize = poolSize == 0 ? Runtime.getRuntime().availableProcessors() : poolSize;
         ExecutorService executor = Executors.newFixedThreadPool(poolSize);
         List<Throwable> errors = new CopyOnWriteArrayList<>();
-        List<File> logs = new ArrayList<>();
         for (int i = 0; i < commands.size(); i++) {
             int index = i;
-            logs.add(new File("target" + File.separator + "command" + index + ".log"));
             executor.execute(() -> {
                 try {
-                    start(commands.get(index), getLog(), logs.get(index));
+                    start(commands.get(index), getLog());
                 } catch (Throwable e) {
                     errors.add(e);
                 }
@@ -64,24 +73,13 @@ public final class ParallelExecMojo extends AbstractMojo {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        if (separateLogs) {
-            for (File log : logs) {
-                getLog().info("************** " + log.getPath());
-                try {
-                    Files.readAllLines(log.toPath()) //
-                            .forEach(System.out::println);
-                } catch (IOException e) {
-                    throw new MojoExecutionException(e);
-                }
-            }
-        }
         errors.forEach(e -> getLog().error(e));
         if (!errors.isEmpty()) {
             throw new MojoExecutionException(errors.get(0));
         }
     }
 
-    void start(Command command, Log log, File output) {
+    void start(Command command, Log log) {
         List<String> list = new ArrayList<>();
         if (command.executable != null) {
             list.add(command.executable);
@@ -91,32 +89,41 @@ public final class ParallelExecMojo extends AbstractMojo {
         }
         list.addAll(command.arguments);
         final File workingDir;
-        if (command.workingDirectory == null) {
-            workingDir = project.getBasedir();
-        } else {
+        if (command.workingDirectory != null) {
             workingDir = new File(command.workingDirectory);
-        }
-        ProcessBuilder b = new ProcessBuilder(list) //
-                .directory(workingDir);
-        if (separateLogs) {
-            b = b.redirectErrorStream(true) //
-                    .redirectOutput(output);
+        } else if (this.workingDirectory != null) {
+            workingDir = this.workingDirectory;
         } else {
-            b = b.inheritIO();
+            workingDir = project.getBasedir();
+        }
+        ProcessExecutor b = new ProcessExecutor().command(list) //
+                .directory(workingDir);
+
+        if (separateLogs) {
+            b = b //
+                    .readOutput(true) //
+                    .timeout(timeoutSeconds, TimeUnit.SECONDS);
+        } else if (showOutput) {
+            b = b //
+                    .redirectOutput(System.out) //
+                    .redirectError(System.err);
         }
         try {
-            Process process = b.start();
-            if (!process.waitFor(timeoutSeconds, TimeUnit.SECONDS)) {
-                process.destroyForcibly();
-                throw new RuntimeException("process timed out, process was sent destroy, command: " + list);
+            ProcessResult result = b.execute();
+            if (result.hasOutput()) {
+                log.info("result of command: " + list + ":\n" + result.outputUTF8());
             }
-            if (process.exitValue() != 0) {
-                throw new RuntimeException("process failed with code=" + process.exitValue());
+            if (result.getExitValue() != 0) {
+                throw new RuntimeException("process failed with code=" + result.getExitValue() + ", command: " + list);
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         } catch (InterruptedException e) {
             // ignore
+        } catch (InvalidExitValueException e) {
+            throw new RuntimeException("process failed with code=" + e.getExitValue());
+        } catch (TimeoutException e) {
+            throw new RuntimeException(e);
         }
         log.info("finished command: " + list);
     }
