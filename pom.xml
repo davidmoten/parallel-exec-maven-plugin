@@ -23,8 +23,7 @@
         <bundle.plugin.version>5.1.9</bundle.plugin.version>
         <spotbugs.plugin.version>4.8.1.0</spotbugs.plugin.version>
         <pmd.version>3.21.2</pmd.version>
-        <scm.url>
-            scm:git:https://github.com/davidmoten/parallel-exec-maven-plugin</scm.url>
+        <scm.url>scm:git:https://github.com/davidmoten/parallel-exec-maven-plugin</scm.url>
     </properties>
 
     <licenses>
@@ -38,7 +37,7 @@
 
     <ciManagement>
         <system>Github Actions</system>
-        <url>https://github.com/davidmoten/parallel-exec-maven-plugin</url>
+        <url>https://github.com/davidmoten/parallel-exec-maven-plugin/actions</url>
     </ciManagement>
 
     <issueManagement>
