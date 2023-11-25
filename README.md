@@ -31,7 +31,7 @@ Here's a kitchen sink example:
                 <!-- commands. If true then a command log will be kept in memory and -->
                 <!-- displayed on completion of command if `showOutput` is true or if -->
                 <!-- an error occurs. Default value is false. -->
-                <separateLogs>true</separateLogs>
+                <separateLogs>false</separateLogs>
                 
                 <!-- optional, show process stdout and stderr output in console. If process has an -->
                 <!-- error then will show logs but only if separateLogs is true. Default value is false. -->
