@@ -59,7 +59,7 @@ public final class ParallelExecMojo extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException {
         poolSize = poolSize == 0 ? Runtime.getRuntime().availableProcessors() : poolSize;
-        ExecutorService executor = Executors.newFixedThreadPool(poolSize);
+        ExecutorService executor = Executors.newWorkStealingPool(poolSize);
         List<Throwable> errors = new CopyOnWriteArrayList<>();
         for (int i = 0; i < commands.size(); i++) {
             int index = i;
