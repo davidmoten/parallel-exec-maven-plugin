@@ -43,7 +43,7 @@ Here's a kitchen sink example:
                 <workingDirectory>${project.basedir}</workingDirectory>
 
                 <!-- optional, if any command returns a non-zero exit code then the maven build -->
-                <!-- will be failed. Any running tasks will be sent an interrupt and queued tasks -->
+                <!-- fails. Any running tasks will be sent an interrupt and queued tasks -->
                 <!-- will be removed from the queue. Default is true -->
                 <failOnError>true</failOnError>
 
@@ -67,6 +67,7 @@ Here's a kitchen sink example:
             </configuration>
         <execution>
     </executions>
+</plugin>
 ```
 
 
