@@ -39,7 +39,7 @@ Here's a kitchen sink example:
                 
                 <!-- optional, this working directory will be used for all commands that -->
                 <!-- do not have a working directory specified. If no working directory -->
-                <!-- specified then ${project.basedir} is used.
+                <!-- specified then ${project.basedir} is used. -->
                 <workingDirectory>${project.basedir}</workingDirectory>
 
                 <!-- these commands will be run in parallel according to poolSize -->                
