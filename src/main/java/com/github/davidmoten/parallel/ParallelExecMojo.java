@@ -2,7 +2,6 @@ package com.github.davidmoten.parallel;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -65,7 +64,7 @@ public final class ParallelExecMojo extends AbstractMojo {
             int index = i;
             executor.execute(() -> {
                 try {
-                    start(commands.get(index), getLog());
+                    start(commands.get(index), getLog(), executor);
                 } catch (Throwable e) {
                     errors.add(e);
                 }
@@ -76,7 +75,7 @@ public final class ParallelExecMojo extends AbstractMojo {
         try {
             executor.awaitTermination(timeoutSeconds, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            getLog().info("interrupted");
         }
         errors.forEach(e -> getLog().error(e));
         if (!errors.isEmpty()) {
@@ -84,7 +83,7 @@ public final class ParallelExecMojo extends AbstractMojo {
         }
     }
 
-    void start(Command command, Log log) {
+    void start(Command command, Log log, ExecutorService executor) {
         List<String> list = new ArrayList<>();
         if (command.executable != null) {
             list.add(command.executable);
@@ -113,6 +112,7 @@ public final class ParallelExecMojo extends AbstractMojo {
                     .redirectOutput(System.out) //
                     .redirectError(System.err);
         }
+        boolean shutdown = true;
         try {
             getLog().info("starting command: " + list);
             ProcessResult result = b.execute();
@@ -127,14 +127,18 @@ public final class ParallelExecMojo extends AbstractMojo {
                     log.info("process failed with code=" + result.getExitValue() + ", command: " + list);
                 }
             }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+            shutdown = false;
         } catch (InterruptedException e) {
             // ignore
         } catch (InvalidExitValueException e) {
             throw new RuntimeException("process failed with code=" + e.getExitValue());
-        } catch (TimeoutException e) {
+        } catch (IOException | TimeoutException e) {
             throw new RuntimeException(e);
+        } finally {
+            if (shutdown) {
+                // stop any queued tasks and interrupt all running tasks
+                executor.shutdownNow();
+            }
         }
         log.info("finished command: " + list);
     }
