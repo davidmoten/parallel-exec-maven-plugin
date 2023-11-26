@@ -23,7 +23,8 @@
         <bundle.plugin.version>5.1.9</bundle.plugin.version>
         <spotbugs.plugin.version>4.8.1.0</spotbugs.plugin.version>
         <pmd.version>3.21.2</pmd.version>
-        <scm.url>scm:git:https://github.com/davidmoten/parallel-exec-maven-plugin</scm.url>
+        <scm.url>
+            scm:git:https://github.com/davidmoten/parallel-exec-maven-plugin</scm.url>
     </properties>
 
     <licenses>
@@ -107,6 +108,26 @@
             <artifactId>maven-project</artifactId>
             <version>2.2.1</version>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.davidmoten</groupId>
+            <artifactId>guava-mini</artifactId>
+            <version>0.1.7</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.36</version>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>
