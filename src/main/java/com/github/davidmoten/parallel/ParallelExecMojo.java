@@ -59,7 +59,7 @@ public final class ParallelExecMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
-
+        long t = System.currentTimeMillis();
         poolSize = poolSize == 0 ? Runtime.getRuntime().availableProcessors() : poolSize;
         ExecutorService executor = Executors.newWorkStealingPool(poolSize);
         List<Throwable> errors = new CopyOnWriteArrayList<>();
@@ -84,7 +84,7 @@ public final class ParallelExecMojo extends AbstractMojo {
         if (!errors.isEmpty()) {
             throw new MojoExecutionException(errors.get(0));
         }
-        getLog().info("mojo finished execution");
+        getLog().info("mojo finished execution after " + new DecimalFormat("0.000").format(t/1000.0) + "ms");
     }
 
     void start(Command command, Log log, ExecutorService executor)
