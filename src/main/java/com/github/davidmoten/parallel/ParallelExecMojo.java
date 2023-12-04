@@ -84,7 +84,7 @@ public final class ParallelExecMojo extends AbstractMojo {
         if (!errors.isEmpty()) {
             throw new MojoExecutionException(errors.get(0));
         }
-        getLog().info("mojo finished execution after " + new DecimalFormat("0.000").format(t/1000.0) + "ms");
+        getLog().info("mojo finished execution after " + new DecimalFormat("0.000").format(t/1000.0) + "s");
     }
 
     void start(Command command, Log log, ExecutorService executor)
