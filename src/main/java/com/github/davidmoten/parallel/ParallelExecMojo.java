@@ -87,7 +87,8 @@ public final class ParallelExecMojo extends AbstractMojo {
         if (!errors.isEmpty()) {
             throw new MojoExecutionException(errors.get(0));
         }
-        getLog().info("mojo finished execution after " + new DecimalFormat("0.000").format((System.currentTimeMillis() - t)/1000.0) + "s");
+        getLog().info("mojo finished execution after "
+                + new DecimalFormat("0.000").format((System.currentTimeMillis() - t) / 1000.0) + "s");
     }
 
     private File targetDirectory() {
