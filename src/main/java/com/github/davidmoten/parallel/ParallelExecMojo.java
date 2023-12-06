@@ -2,6 +2,8 @@ package com.github.davidmoten.parallel;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,7 +69,8 @@ public final class ParallelExecMojo extends AbstractMojo {
             int index = i;
             executor.submit(() -> {
                 try {
-                    start(commands.get(index), getLog(), executor);
+                    File output = new File(targetDirectory(), "process-" + index + ".log");
+                    start(commands.get(index), getLog(), executor, output);
                 } catch (Throwable e) {
                     errors.add(e);
                 }
@@ -87,7 +90,15 @@ public final class ParallelExecMojo extends AbstractMojo {
         getLog().info("mojo finished execution after " + new DecimalFormat("0.000").format((System.currentTimeMillis() - t)/1000.0) + "s");
     }
 
-    void start(Command command, Log log, ExecutorService executor)
+    private File targetDirectory() {
+        if (project == null) {
+            return new File("target");
+        } else {
+            return new File(project.getBuild().getDirectory());
+        }
+    }
+
+    void start(Command command, Log log, ExecutorService executor, File outputFile)
             throws InvalidExitValueException, IOException, TimeoutException {
         long t = System.currentTimeMillis();
         List<String> list = new ArrayList<>();
@@ -107,14 +118,14 @@ public final class ParallelExecMojo extends AbstractMojo {
             workingDir = project.getBasedir();
         }
         ProcessExecutor b = new ProcessExecutor().command(list) //
-                .directory(workingDir);
+                .directory(workingDir) //
+                .timeout(timeoutSeconds, TimeUnit.SECONDS);
 
         if (separateLogs) {
-            b = b //
-                    .readOutput(true) //
-                    .timeout(timeoutSeconds, TimeUnit.SECONDS);
+            b = b.readOutput(true);
         } else if (showOutput) {
             b = b //
+                    .readOutput(true) //
                     .redirectOutput(System.out) //
                     .redirectError(System.err);
         }
@@ -122,6 +133,10 @@ public final class ParallelExecMojo extends AbstractMojo {
         try {
             getLog().info("starting command: " + list);
             ProcessResult result = b.execute();
+            if (result.hasOutput()) {
+                String logs = result.outputUTF8();
+                Files.write(outputFile.toPath(), logs.getBytes(StandardCharsets.UTF_8));
+            }
             if (separateLogs && (showOutput || result.getExitValue() != 0)) {
                 log.info("result of command: " + list + ":\n" + result.outputUTF8());
             }

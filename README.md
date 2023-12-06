@@ -28,9 +28,9 @@ Here's a kitchen sink example:
                 <executable>${project.basedir}/generate.sh</executable>
                 
                 <!-- optional, if false then logs may be interleaved from the different parallel -->
-                <!-- commands. If true then a command log will be kept in memory and -->
-                <!-- displayed on completion of command if `showOutput` is true or if -->
-                <!-- an error occurs. Default value is false. -->
+                <!-- commands. If true then a command log will be kept in memory (and on disk at -->
+                <!-- target/process-#.log) and displayed on completion of command if `showOutput` -->
+                <!-- is true or if an error occurs. Default value is false. -->
                 <separateLogs>false</separateLogs>
                 
                 <!-- optional, show process stdout and stderr output in console. If process has an -->
