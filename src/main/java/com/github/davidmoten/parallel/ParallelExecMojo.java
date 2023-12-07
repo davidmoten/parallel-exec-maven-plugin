@@ -143,9 +143,12 @@ public final class ParallelExecMojo extends AbstractMojo {
             }
             if (separateLogs && (showOutput || result.getExitValue() != 0)) {
                 out.close();
-                log.info("result of command: " + list + ":\n");
-                Files.lines(outputFile.toPath()) //
-                        .forEach(log::info);
+                // ensure that process logs don't interleave
+                synchronized (this) {
+                    log.info("result of command: " + list + ":\n");
+                    Files.lines(outputFile.toPath()) //
+                            .forEach(log::info);
+                }
             }
             if (result.getExitValue() != 0) {
                 if (failOnError) {
