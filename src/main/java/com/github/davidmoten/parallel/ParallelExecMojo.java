@@ -1,7 +1,10 @@
 package com.github.davidmoten.parallel;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.DecimalFormat;
@@ -118,20 +121,20 @@ public final class ParallelExecMojo extends AbstractMojo {
         } else {
             workingDir = project.getBasedir();
         }
-        ProcessExecutor b = new ProcessExecutor().command(list) //
-                .directory(workingDir) //
-                .timeout(timeoutSeconds, TimeUnit.SECONDS);
-
-        if (separateLogs) {
-            b = b.readOutput(true);
-        } else if (showOutput) {
-            b = b //
-                    .readOutput(true) //
-                    .redirectOutput(System.out) //
-                    .redirectError(System.err);
-        }
+        outputFile.delete();
+        outputFile.getParentFile().mkdirs();
+        outputFile.createNewFile();
         boolean shutdown = true;
-        try {
+        try (OutputStream out = new BufferedOutputStream(new FileOutputStream(outputFile))) {
+            ProcessExecutor b = new ProcessExecutor().command(list) //
+                    .directory(workingDir) //
+                    .timeout(timeoutSeconds, TimeUnit.SECONDS) //
+                    .redirectOutput(out);
+            if (showOutput && !separateLogs) {
+                b = b //
+                        .redirectOutputAlsoTo(System.out) //
+                        .redirectErrorAlsoTo(System.err);
+            }
             getLog().info("starting command: " + list);
             ProcessResult result = b.execute();
             if (result.hasOutput()) {
@@ -139,7 +142,10 @@ public final class ParallelExecMojo extends AbstractMojo {
                 Files.write(outputFile.toPath(), logs.getBytes(StandardCharsets.UTF_8));
             }
             if (separateLogs && (showOutput || result.getExitValue() != 0)) {
-                log.info("result of command: " + list + ":\n" + result.outputUTF8());
+                out.close();
+                log.info("result of command: " + list + ":\n");
+                Files.lines(outputFile.toPath()) //
+                        .forEach(log::info);
             }
             if (result.getExitValue() != 0) {
                 if (failOnError) {
