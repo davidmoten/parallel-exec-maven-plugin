@@ -68,12 +68,12 @@ public final class ParallelExecMojo extends AbstractMojo {
         poolSize = poolSize == 0 ? Runtime.getRuntime().availableProcessors() : poolSize;
         ExecutorService executor = Executors.newWorkStealingPool(poolSize);
         List<Throwable> errors = new CopyOnWriteArrayList<>();
-        for (int i = 0; i < commands.size(); i++) {
+        for (int i = 1; i <= commands.size(); i++) {
             int index = i;
             executor.submit(() -> {
                 try {
                     File output = new File(targetDirectory(), "process-" + index + ".log");
-                    start(commands.get(index), getLog(), executor, output);
+                    start(commands.get(index - 1), getLog(), executor, output);
                 } catch (Throwable e) {
                     errors.add(e);
                 }
