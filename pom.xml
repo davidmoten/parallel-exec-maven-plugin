@@ -7,7 +7,7 @@
         <version>0.1</version>
     </parent>
     <artifactId>parallel-exec-maven-plugin</artifactId>
-    <version>0.1.6-SNAPSHOT</version>
+    <version>0.1.6</version>
     <packaging>maven-plugin</packaging>
     <name>${project.artifactId}</name>
     <description>Runs external executables in parallel</description>
@@ -63,7 +63,7 @@
         <connection>${scm.url}</connection>
         <developerConnection>${scm.url}</developerConnection>
         <url>${scm.url}</url>
-        <tag>HEAD</tag>
+        <tag>0.1.6</tag>
     </scm>
 
     <dependencies>
