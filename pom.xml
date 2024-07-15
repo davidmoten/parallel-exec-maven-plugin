@@ -20,7 +20,7 @@
         <junit.version>4.13.2</junit.version>
         <bundle.plugin.version>5.1.9</bundle.plugin.version>
         <spotbugs.plugin.version>4.8.6.2</spotbugs.plugin.version>
-        <pmd.version>3.23.0</pmd.version>
+        <pmd.version>3.24.0</pmd.version>
         <scm.url>
             scm:git:https://github.com/davidmoten/parallel-exec-maven-plugin</scm.url>
     </properties>
