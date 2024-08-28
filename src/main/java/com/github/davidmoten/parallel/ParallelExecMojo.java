@@ -82,7 +82,9 @@ public final class ParallelExecMojo extends AbstractMojo {
         getLog().info("awaiting finish of " + commands.size() + " commands");
         executor.shutdown();
         try {
-            executor.awaitTermination(timeoutSeconds, TimeUnit.SECONDS);
+            if (!executor.awaitTermination(timeoutSeconds, TimeUnit.SECONDS)) {
+                errors.add(new TimeoutException("task group execution timed out after " + timeoutSeconds + "s"));
+            };
         } catch (InterruptedException e) {
             getLog().info("interrupted");
         }
